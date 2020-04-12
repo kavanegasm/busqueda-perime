@@ -171,20 +171,23 @@ func main() {
 	//db, err = sql.Open(driver, dsn)
 	db, err := sql.Open("mysql", "root:password@/busqueda-db")
 	if err != nil {
-		return fmt.Errorf("categoria: error opening DB: %v", err)
+		//return fmt.Errorf("categoria: error opening DB: %v", err)
+		panic(err.Error()) 
 	}
 
 	// Creamos la tabla para los post, si no existe
 	_, err = db.Exec(categoriaTableSQL )
 	if err != nil {
-		return fmt.Errorf("post: error creating post table: %v", err)
+		//return fmt.Errorf("post: error creating post table: %v", err)
+		panic(err.Error()) 
 	}
 
 	// Preparamos los "prepared statements" para get, list, new, put y del.
 	for verb, sc := range prepStmts {
 		sc.stmt, err = db.Prepare(sc.q)
 		if err != nil {
-			return fmt.Errorf("categoria: error preparing %s statement: %v", verb, err)
+			//return fmt.Errorf("categoria: error preparing %s statement: %v", verb, err)
+			panic(err.Error()) 
 		}
 	}
 
