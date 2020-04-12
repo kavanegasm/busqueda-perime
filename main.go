@@ -6,8 +6,61 @@ import (
 	"math/rand"
 	"time"
 	"log"
+	"encoding/json"
+	"github.com/gorilla/mux"
 	_ "github.com/go-sql-driver/mysql"
 )
+//mux
+type Person struct {
+	ID string `json:"id,omitempty"`
+	FirstName string `json:"firstname,omitempty"`
+	LastName string `json:"lastname,omitempty"`
+	Address *Address `json:"address,omitempty"`
+  }
+  
+  type Address struct {
+	City string `json:"city,omitempty"`
+	State string `json:"state,omitempty"`
+  }
+  
+  var people []Person
+  
+  // EndPoints
+  func GetPersonEndpoint(w http.ResponseWriter, req *http.Request){
+	params := mux.Vars(req)
+	for _, item := range people {
+	  if item.ID == params["id"] {
+		json.NewEncoder(w).Encode(item)
+		return
+	  }
+	}
+	json.NewEncoder(w).Encode(&Person{})
+  }
+  
+  func GetPeopleEndpoint(w http.ResponseWriter, req *http.Request){
+	json.NewEncoder(w).Encode(people)
+  }
+  
+  func CreatePersonEndpoint(w http.ResponseWriter, req *http.Request){
+	params := mux.Vars(req)
+	var person Person
+	_ = json.NewDecoder(req.Body).Decode(&person)
+	person.ID = params["id"]
+	people = append(people, person)
+	json.NewEncoder(w).Encode(people)
+  
+  }
+  
+  func DeletePersonEndpoint(w http.ResponseWriter, req *http.Request) {
+	params := mux.Vars(req)
+	for index, item := range people {
+	  if item.ID == params["id"] {
+		people = append(people[:index], people[index + 1:]...)
+		break
+	  }
+	}
+	json.NewEncoder(w).Encode(people)
+  }
 // Categoria es una entrada de contenido.
 type Categoria struct {
 	Id     int
@@ -173,25 +226,27 @@ func main() {
         fmt.Println("hello world",db)
 
 	if err != nil {
-		//return fmt.Errorf("categoria: error opening DB: %v", err)
 		panic(err.Error()) 
 	}
 
-	// Creamos la tabla para los post, si no existe
+	// Creamos la tabla para loas categorias, si no existe
 	_, err = db.Exec(categoriaTableSQL )
 	if err != nil {
-		//return fmt.Errorf("post: error creating post table: %v", err)
 		panic(err.Error()) 
 	}
+	//definimos como escuchar
+	 router := mux.NewRouter()
+  
+	// data ejemplo
+	busqueda = append(busqueda, Busqueda{ID: "1", FirstName:"Ryan", LastName:"Ray", Address: &Address{City:"Dubling", State:"California"}})
+	busqueda = append(busqueda, Busqueda{ID: "2", FirstName:"Maria", LastName:"Ray"})
 
-	// Preparamos los "prepared statements" para get, list, new, put y del.
-	for verb, sc := range prepStmts {
-		sc.stmt, err = db.Prepare(sc.q)
-		if err != nil {
-			//return fmt.Errorf("categoria: error preparing %s statement: %v", verb, err)
-			panic(err.Error()) 
-		}
-	}
+	// endpoints
+	router.HandleFunc("/busqueda", GetBusquedaEndpoint).Methods("GET")
+	router.HandleFunc("/busqueda/{id}", GetBusquedaEndpoint).Methods("GET")
+	router.HandleFunc("/busqueda/{id}", CreateBusquedaEndpoint).Methods("POST")
+	router.HandleFunc("/busqueda/{id}", DeleteBusquedaEndpoint).Methods("DELETE")
 
-	//return nil
+	log.Fatal(http.ListenAndServe(":1859", router))
+
 }
