@@ -170,6 +170,8 @@ func main() {
 	var err error
 	//db, err = sql.Open(driver, dsn)
 	db, err := sql.Open("mysql", "root:password@/busqueda-db")
+        fmt.Println("hello world",db)
+
 	if err != nil {
 		//return fmt.Errorf("categoria: error opening DB: %v", err)
 		panic(err.Error()) 
@@ -191,5 +193,5 @@ func main() {
 		}
 	}
 
-	return nil
+	//return nil
 }
