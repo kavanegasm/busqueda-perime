@@ -2,6 +2,7 @@ version: '3.3'
 services:
   perime-busqueda-ms:
     image: golang:latest
+    container_name: perime-busqueda-ms  
     volumes:
       - .:/go/src/go-with-compose
     working_dir: /go/src/go-with-compose
@@ -15,6 +16,7 @@ services:
       - perime-busqueda-db
   perime-busqueda-db:
     image: mariadb:latest
+    container_name: perime-busqueda-db
     restart: always
     environment:
       MYSQL_DATABASE: 'busqueda-db'
