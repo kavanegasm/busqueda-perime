@@ -15,7 +15,7 @@ type Categoria struct {
 	NombreCategoria  string
 	TipoCategoria   string
 }
-/ Get busca un categoria por ID. El bool es falso si no lo encontramos.
+// Get busca un categoria por ID. El bool es falso si no lo encontramos.
 func Get(id int) (Categoria, bool) {
 	categorias := getCategorias(id)
 	if len(categorias) == 0 {
