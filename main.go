@@ -239,8 +239,8 @@ func main() {
 	 router := mux.NewRouter()
   
 	// data ejemplo
-	busqueda = append(busqueda, Busqueda{ID: "1", FirstName:"Ryan", LastName:"Ray", Address: &Address{City:"Dubling", State:"California"}})
-	busqueda = append(busqueda, Busqueda{ID: "2", FirstName:"Maria", LastName:"Ray"})
+  	people = append(people, Person{ID: "1", FirstName:"Ryan", LastName:"Ray", Address: &Address{City:"Dubling", State:"California"}})
+  	people = append(people, Person{ID: "2", FirstName:"Maria", LastName:"Ray"})
 
 	// endpoints
 	router.HandleFunc("/people", GetPeopleEndpoint).Methods("GET")
