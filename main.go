@@ -3,63 +3,188 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"math/rand"
+	"time"
 	_ "github.com/go-sql-driver/mysql"
 )
+// Categoria es una entrada de contenido.
+type Categoria struct {
+	Id     int
+	CategoriaId int
+	NombreCategoria  string
+	TipoCategoria   string
+}
+//privado
+// getCategorias busca un categoria con id o listado de todos si id es -1.
+func getCategorias(id int) []Post {
+	res := []Post{}
+	if id != -1 {
+		var p Post
+		// Obtenemos y ejecutamos el get prepared statement.
+		get := prepStmts["get"].stmt
+		err := get.QueryRow(id).Scan(&p.Id, &p.CategoriaId, &p.NombreCategoria, &p.TipoCategoria)
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Printf("categoria: error getting categoria. Id: %d, err: %v\n", id, err)
+			}
+		} else {
+			res = append(res, p)
+		}
+		return res
+	}
+
+	// Obtenemos y ejecutamos el list prepared statement.
+	list := prepStmts["list"].stmt
+	rows, err := list.Query()
+	if err != nil {
+		log.Printf("categoria: error getting categorias. err: %v\n", err)
+	}
+	defer rows.Close()
+
+	// Procesamos los rows.
+	for rows.Next() {
+		var p Post
+		if err := rows.Scan(&p.Id, &p.CategoriaId, &p.NombreCategoria, &p.TipoCategoria); err != nil {
+			log.Printf("categoria: error scanning row: %v\n", err)
+			continue
+		}
+		res = append(res, p)
+	}
+	// Verificamos si hubo error procesando los rows.
+	if err := rows.Err(); err != nil {
+		log.Printf("categoria: error reading rows: %v\n", err)
+	}
+
+	return res
+}
+
+// newPost inserta un categoria en la DB.
+func newPost(p Post) []Post {
+	// Generamos ID único para el nuevo categoria.
+	p.Id = rand.Intn(1000)
+	for {
+		l := getCategorias(p.Id)
+		if len(l) == 0 {
+			break
+		}
+		p.Id = rand.Intn(1000)
+	}
+
+	// Obtenemos y ejecutamos insert prepared statement.
+	insert := prepStmts["insert"].stmt
+	_, err := insert.Exec(p.Id, p.CategoriaId, p.NombreCategoria, p.TipoCategoria)
+	if err != nil {
+		log.Printf("categoria: error inserting categoria %d into DB: %v\n", p.Id, err)
+	}
+	return []Post{p}
+}
+
+// putPost actualiza un categoria en la DB.
+func putPost(p Post) {
+	// Obtenemos y ejecutamos update prepared statement.
+	update := prepStmts["update"].stmt
+	_, err := update.Exec(p.CategoriaId, p.NombreCategoria, p.TipoCategoria, p.Id)
+	if err != nil {
+		log.Printf("categoria: error updating categoria %d into DB: %v\n", p.Id, err)
+	}
+}
+
+// delPost borra un categoria de la DB.
+func delPost(id int) {
+	// Obtenemos y ejecutamos delete prepared statement.
+	del := prepStmts["delete"].stmt
+	_, err := del.Exec(id)
+	if err != nil {
+		log.Printf("categoria: error deleting categoria %d into DB: %v\n", id, err)
+	}
+}
+//sql privado 
+// db es la base de datos global
+var db *sql.DB
+
+// Prepared statements
+type stmtConfig struct {
+	stmt *sql.Stmt
+	q    string
+}
+
+var prepStmts = map[string]*stmtConfig{
+	"get":    {q: "select * from categoria where id = ?;"},
+	"list":   {q: "select * from categoria;"},
+	"insert": {q: "insert into categoria (id, categoriaId, nombreCategoria, tipoCategoria) values (?, ?, ?, ?);"},
+	"update": {q: "update categoria set categoriaId = ?, nombreCategoria = ?, tipoCategoria = ? where id = ?;"},
+	"delete": {q: "delete from categoria where id = ?;"},
+}
+
+
+// Get busca una categoria por ID. El bool es falso si no lo encontramos.
+func Get(id int) (Categoria, bool) {
+	categorias := getCategorias(id)
+	if len(categorias) == 0 {
+		// Slice vacío; no se encontró el categoria.
+		return Categoria{}, false
+	}
+	return categorias[0], true
+}
+
+// List devuelve un slice de todos los categorias.
+func List() []Categoria {
+	return getCategorias(-1)
+}
+
+// New guarda un categoria nuevo.
+func New(p Categoria) []Categoria {
+	return newCategoria(p)
+}
+
+// Put guarda un categoria existente.
+func Put(p Categoria) {
+	putCategoria(p)
+}
+
+// Del borra un categoria.
+func Del(id int) {
+	delCategoria(id)
+}
+
 
 func main() {
 	// Open database connection
-	db, err := sql.Open("mysql", "root:password@/busqueda-db")
+	//db, err := sql.Open("mysql", "root:password@/busqueda-db")
+	rand.Seed(time.Now().UnixNano())
+
+	// Info para la DB.
+	const (
+		driver       = "mysql"
+		dsn          = "busqueda-db"
+		postTableSQL = `create table if not exists post(
+			id int primary key not null,
+			CategoriaId int not null,
+			NombreCategoria text not null,
+			TipoCategoria text not null
+		);`
+	)
+
+	// Abrimos la base de datos
+	var err error
+	db, err = sql.Open(driver, dsn)
 	if err != nil {
-		panic(err.Error())  // Just for example purpose. You should use proper error handling instead of panic
+		return fmt.Errorf("post: error opening DB: %v", err)
 	}
-	defer db.Close()
 
-	// Execute the query
-	rows, err := db.Query("SELECT * FROM busqueda")
+	// Creamos la tabla para los post, si no existe
+	_, err = db.Exec(postTableSQL)
 	if err != nil {
-		panic(err.Error()) // proper error handling instead of panic in your app
+		return fmt.Errorf("post: error creating post table: %v", err)
 	}
 
-	// Get column names
-	columns, err := rows.Columns()
-	if err != nil {
-		panic(err.Error()) // proper error handling instead of panic in your app
-	}
-
-	// Make a slice for the values
-	values := make([]sql.RawBytes, len(columns))
-
-	// rows.Scan wants '[]interface{}' as an argument, so we must copy the
-	// references into such a slice
-	// See http://code.google.com/p/go-wiki/wiki/InterfaceSlice for details
-	scanArgs := make([]interface{}, len(values))
-	for i := range values {
-		scanArgs[i] = &values[i]
-	}
-
-	// Fetch rows
-	for rows.Next() {
-		// get RawBytes from data
-		err = rows.Scan(scanArgs...)
+	// Preparamos los "prepared statements" para get, list, new, put y del.
+	for verb, sc := range prepStmts {
+		sc.stmt, err = db.Prepare(sc.q)
 		if err != nil {
-			panic(err.Error()) // proper error handling instead of panic in your app
+			return fmt.Errorf("post: error preparing %s statement: %v", verb, err)
 		}
+	}
 
-		// Now do something with the data.
-		// Here we just print each column as a string.
-		var value string
-		for i, col := range values {
-			// Here we can check if the value is nil (NULL value)
-			if col == nil {
-				value = "NULL"
-			} else {
-				value = string(col)
-			}
-			fmt.Println(columns[i], ": ", value)
-		}
-		fmt.Println("-----------------------------------")
-	}
-	if err = rows.Err(); err != nil {
-		panic(err.Error()) // proper error handling instead of panic in your app
-	}
+	return nil
 }
