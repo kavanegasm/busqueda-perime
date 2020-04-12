@@ -168,7 +168,8 @@ func main() {
 
 	// Abrimos la base de datos
 	var err error
-	db, err = sql.Open(driver, dsn)
+	//db, err = sql.Open(driver, dsn)
+	db, err := sql.Open("mysql", "root:password@/busqueda-db")
 	if err != nil {
 		return fmt.Errorf("categoria: error opening DB: %v", err)
 	}
