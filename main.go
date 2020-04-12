@@ -242,10 +242,10 @@ func main() {
 	busqueda = append(busqueda, Busqueda{ID: "2", FirstName:"Maria", LastName:"Ray"})
 
 	// endpoints
-	router.HandleFunc("/busqueda", GetBusquedaEndpoint).Methods("GET")
-	router.HandleFunc("/busqueda/{id}", GetBusquedaEndpoint).Methods("GET")
-	router.HandleFunc("/busqueda/{id}", CreateBusquedaEndpoint).Methods("POST")
-	router.HandleFunc("/busqueda/{id}", DeleteBusquedaEndpoint).Methods("DELETE")
+	router.HandleFunc("/people", GetPeopleEndpoint).Methods("GET")
+	router.HandleFunc("/people/{id}", GetPersonEndpoint).Methods("GET")
+	router.HandleFunc("/people/{id}", CreatePersonEndpoint).Methods("POST")
+	router.HandleFunc("/people/{id}", DeletePersonEndpoint).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":1859", router))
 
