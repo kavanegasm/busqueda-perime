@@ -72,7 +72,7 @@ func getCategorias(id int) []Categoria {
 		var p Categoria
 		// Obtenemos y ejecutamos el get prepared statement.
 		get := prepStmts["get"].stmt
-		err := get.QueryRow(id).Scan(&p.Id, &p.UserId, &p.Title, &p.Body)
+		err := get.QueryRow(id).Scan(&p.Id, &p.CategoriaId , &p.NombreCategoria, &p.TipoCategoria )
 		if err != nil {
 			if err != sql.ErrNoRows {
 				log.Printf("categoria: error getting categoria. Id: %d, err: %v\n", id, err)
@@ -94,7 +94,7 @@ func getCategorias(id int) []Categoria {
 	// Procesamos los rows.
 	for rows.Next() {
 		var p Categoria
-		if err := rows.Scan(&p.Id, &p.UserId, &p.Title, &p.Body); err != nil {
+		if err := rows.Scan(&p.Id, &p.CategoriaId , &p.NombreCategoria, &p.TipoCategoria ); err != nil {
 			log.Printf("categoria: error scanning row: %v\n", err)
 			continue
 		}
@@ -122,7 +122,7 @@ func newCategoria(p Categoria) []Categoria {
 
 	// Obtenemos y ejecutamos insert prepared statement.
 	insert := prepStmts["insert"].stmt
-	_, err := insert.Exec(p.Id, p.UserId, p.Title, p.Body)
+	_, err := insert.Exec(p.Id, p.CategoriaId , p.NombreCategoria, p.TipoCategoria )
 	if err != nil {
 		log.Printf("categoria: error inserting categoria %d into DB: %v\n", p.Id, err)
 	}
@@ -133,7 +133,7 @@ func newCategoria(p Categoria) []Categoria {
 func putCategoria(p Categoria) {
 	// Obtenemos y ejecutamos update prepared statement.
 	update := prepStmts["update"].stmt
-	_, err := update.Exec(p.UserId, p.Title, p.Body, p.Id)
+	_, err := update.Exec(p.CategoriaId , p.NombreCategoria, p.TipoCategoria , p.Id)
 	if err != nil {
 		log.Printf("categoria: error updating categoria %d into DB: %v\n", p.Id, err)
 	}
@@ -148,7 +148,6 @@ func delCategoria(id int) {
 		log.Printf("categoria: error deleting categoria %d into DB: %v\n", id, err)
 	}
 }
-
 
 func main() {
 	// Open database connection
