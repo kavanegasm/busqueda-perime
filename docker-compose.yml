@@ -1,7 +1,7 @@
 version: '3.3'
 services:
   perime-busqueda-db:
-    image: mysql:latest
+    image: mariadb:latest
     restart: always
     environment:
       MYSQL_DATABASE: 'busqueda-db'

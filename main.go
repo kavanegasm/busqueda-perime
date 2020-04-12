@@ -8,14 +8,14 @@ import (
 
 func main() {
 	// Open database connection
-	db, err := sql.Open("mysql", "root:password@/sys")
+	db, err := sql.Open("mysql", "root:password@/busqueda-db")
 	if err != nil {
 		panic(err.Error())  // Just for example purpose. You should use proper error handling instead of panic
 	}
 	defer db.Close()
 
 	// Execute the query
-	rows, err := db.Query("SELECT * FROM sys_config")
+	rows, err := db.Query("SELECT * FROM busqueda")
 	if err != nil {
 		panic(err.Error()) // proper error handling instead of panic in your app
 	}
