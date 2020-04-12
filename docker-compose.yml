@@ -8,9 +8,6 @@ services:
     command: go run main.go
     ports:
       - "4000:4000"
-    depends_on:
-      perime-busqueda-db:
-       condition: service_healthy
   perime-busqueda-db:
     image: mariadb:latest
     restart: always
