@@ -62,7 +62,37 @@ var prepStmts = map[string]*stmtConfig{
 	"delete": {q: "delete from categoria where id = ?;"},
 }
 
+//publico
 
+// Get busca un categoria por ID. El bool es falso si no lo encontramos.
+func Get(id int) (Categoria, bool) {
+	categorias := getCategorias(id)
+	if len(categorias) == 0 {
+		// Slice vacío; no se encontró el categoria.
+		return Categoria{}, false
+	}
+	return categorias[0], true
+}
+
+// List devuelve un slice de todos los categorias.
+func List() []Categoria {
+	return getCategorias(-1)
+}
+
+// New guarda un categoria nuevo.
+func New(p Categoria) []Categoria {
+	return newCategoria(p)
+}
+
+// Put guarda un categoria existente.
+func Put(p Categoria) {
+	putCategoria(p)
+}
+
+// Del borra un categoria.
+func Del(id int) {
+	delCategoria(id)
+}
 
 
 func main() {
