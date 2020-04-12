@@ -15,6 +15,7 @@ type Categoria struct {
 	NombreCategoria  string
 	TipoCategoria   string
 }
+//publico
 // Get busca un categoria por ID. El bool es falso si no lo encontramos.
 func Get(id int) (Categoria, bool) {
 	categorias := getCategorias(id)
@@ -62,36 +63,90 @@ var prepStmts = map[string]*stmtConfig{
 	"delete": {q: "delete from categoria where id = ?;"},
 }
 
-//publico
+//privado 
 
-// Get busca un categoria por ID. El bool es falso si no lo encontramos.
-func Get(id int) (Categoria, bool) {
-	categorias := getCategorias(id)
-	if len(categorias) == 0 {
-		// Slice vacío; no se encontró el categoria.
-		return Categoria{}, false
+// getCategorias busca un categoria con id o listado de todos si id es -1.
+func getCategorias(id int) []Categoria {
+	res := []Categoria{}
+	if id != -1 {
+		var p Categoria
+		// Obtenemos y ejecutamos el get prepared statement.
+		get := prepStmts["get"].stmt
+		err := get.QueryRow(id).Scan(&p.Id, &p.UserId, &p.Title, &p.Body)
+		if err != nil {
+			if err != sql.ErrNoRows {
+				log.Printf("categoria: error getting categoria. Id: %d, err: %v\n", id, err)
+			}
+		} else {
+			res = append(res, p)
+		}
+		return res
 	}
-	return categorias[0], true
+
+	// Obtenemos y ejecutamos el list prepared statement.
+	list := prepStmts["list"].stmt
+	rows, err := list.Query()
+	if err != nil {
+		log.Printf("categoria: error getting categorias. err: %v\n", err)
+	}
+	defer rows.Close()
+
+	// Procesamos los rows.
+	for rows.Next() {
+		var p Categoria
+		if err := rows.Scan(&p.Id, &p.UserId, &p.Title, &p.Body); err != nil {
+			log.Printf("categoria: error scanning row: %v\n", err)
+			continue
+		}
+		res = append(res, p)
+	}
+	// Verificamos si hubo error procesando los rows.
+	if err := rows.Err(); err != nil {
+		log.Printf("categoria: error reading rows: %v\n", err)
+	}
+
+	return res
 }
 
-// List devuelve un slice de todos los categorias.
-func List() []Categoria {
-	return getCategorias(-1)
+// newCategoria inserta un categoria en la DB.
+func newCategoria(p Categoria) []Categoria {
+	// Generamos ID único para el nuevo categoria.
+	p.Id = rand.Intn(1000)
+	for {
+		l := getCategorias(p.Id)
+		if len(l) == 0 {
+			break
+		}
+		p.Id = rand.Intn(1000)
+	}
+
+	// Obtenemos y ejecutamos insert prepared statement.
+	insert := prepStmts["insert"].stmt
+	_, err := insert.Exec(p.Id, p.UserId, p.Title, p.Body)
+	if err != nil {
+		log.Printf("categoria: error inserting categoria %d into DB: %v\n", p.Id, err)
+	}
+	return []Categoria{p}
 }
 
-// New guarda un categoria nuevo.
-func New(p Categoria) []Categoria {
-	return newCategoria(p)
+// putCategoria actualiza un categoria en la DB.
+func putCategoria(p Categoria) {
+	// Obtenemos y ejecutamos update prepared statement.
+	update := prepStmts["update"].stmt
+	_, err := update.Exec(p.UserId, p.Title, p.Body, p.Id)
+	if err != nil {
+		log.Printf("categoria: error updating categoria %d into DB: %v\n", p.Id, err)
+	}
 }
 
-// Put guarda un categoria existente.
-func Put(p Categoria) {
-	putCategoria(p)
-}
-
-// Del borra un categoria.
-func Del(id int) {
-	delCategoria(id)
+// delCategoria borra un categoria de la DB.
+func delCategoria(id int) {
+	// Obtenemos y ejecutamos delete prepared statement.
+	del := prepStmts["delete"].stmt
+	_, err := del.Exec(id)
+	if err != nil {
+		log.Printf("categoria: error deleting categoria %d into DB: %v\n", id, err)
+	}
 }
 
 
