@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
+	"log"
 	_ "github.com/go-sql-driver/mysql"
 )
 // Categoria es una entrada de contenido.
@@ -16,10 +17,10 @@ type Categoria struct {
 }
 //privado
 // getCategorias busca un categoria con id o listado de todos si id es -1.
-func getCategorias(id int) []Post {
-	res := []Post{}
+func getCategorias(id int) []Categoria {
+	res := []Categoria{}
 	if id != -1 {
-		var p Post
+		var p Categoria
 		// Obtenemos y ejecutamos el get prepared statement.
 		get := prepStmts["get"].stmt
 		err := get.QueryRow(id).Scan(&p.Id, &p.CategoriaId, &p.NombreCategoria, &p.TipoCategoria)
@@ -43,7 +44,7 @@ func getCategorias(id int) []Post {
 
 	// Procesamos los rows.
 	for rows.Next() {
-		var p Post
+		var p Categoria
 		if err := rows.Scan(&p.Id, &p.CategoriaId, &p.NombreCategoria, &p.TipoCategoria); err != nil {
 			log.Printf("categoria: error scanning row: %v\n", err)
 			continue
@@ -59,7 +60,7 @@ func getCategorias(id int) []Post {
 }
 
 // newPost inserta un categoria en la DB.
-func newPost(p Post) []Post {
+func newCategoria(p Categoria) []Categoria {
 	// Generamos ID único para el nuevo categoria.
 	p.Id = rand.Intn(1000)
 	for {
@@ -76,11 +77,11 @@ func newPost(p Post) []Post {
 	if err != nil {
 		log.Printf("categoria: error inserting categoria %d into DB: %v\n", p.Id, err)
 	}
-	return []Post{p}
+	return []Categoria{p}
 }
 
 // putPost actualiza un categoria en la DB.
-func putPost(p Post) {
+func putPost(p Categoria) {
 	// Obtenemos y ejecutamos update prepared statement.
 	update := prepStmts["update"].stmt
 	_, err := update.Exec(p.CategoriaId, p.NombreCategoria, p.TipoCategoria, p.Id)
