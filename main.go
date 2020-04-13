@@ -18,7 +18,7 @@ func main() {
     // You need to set your Username and Password here
     a.Initialize("root", "password", "busqueda-db")
 
-    a.Run(":50000")
+    a.Run(":55000")
 
 }
 
