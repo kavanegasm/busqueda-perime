@@ -16,9 +16,9 @@ import (
 func main() {
 	a := App{} 
     // You need to set your Username and Password here
-    a.Initialize("root", "password", "busqueda-db")
+    a.Initialize("root", "password", "perime-busqueda-db", "busqueda-db")
 
-    a.Run(":55000")
+    a.Run(":60007")
 
 }
 
@@ -27,8 +27,8 @@ type App struct {
 	DB     *sql.DB
 }
 
-func (a *App) Initialize(user, password, dbname string) {
-	connectionString := fmt.Sprintf("%s:%s@/%s", user, password, dbname)
+func (a *App) Initialize(user, password, dockername string, dbname string) {
+	connectionString := fmt.Sprintf("%s:%s@tcp(%s)/%s", user, password,dockername, dbname)
 
 	var err error
 	a.DB, err = sql.Open("mysql", connectionString)
